@@ -55,6 +55,20 @@ class QuestionType_SingleLineReversed implements IQuestionTypeHandler {
     }
 }
 
+function findCommonIndentLength(lines: string[]): number {
+    // Find the minimum length of leading whitespace in all lines
+    if (lines.length === 0) return 0;
+    const minPrefixLength = lines.reduce((minLength, line) => {
+        const match = line.match(/^\s*/);
+        return Math.min(minLength, match ? match[0].length : 0);
+    }, Infinity);
+    return minPrefixLength;
+}
+function removeCommonIndent(lines: string[]): string[] {
+    const commonIndentLength = findCommonIndentLength(lines);
+    return lines.map(line => line.slice(commonIndentLength));
+}
+
 class QuestionType_MultiLineBasic implements IQuestionTypeHandler {
     expand(questionText: string, settings: SRSettings): CardFrontBack[] {
         // We don't need to worry about "\r\n", as multi line questions processed by parse() concatenates lines explicitly with "\n"
@@ -63,8 +77,13 @@ class QuestionType_MultiLineBasic implements IQuestionTypeHandler {
             questionLines,
             settings.multilineCardSeparator,
         );
-        const side1: string = questionLines.slice(0, lineIdx).join("\n");
-        const side2: string = questionLines.slice(lineIdx + 1).join("\n");
+        let side1lines = questionLines.slice(0, lineIdx);
+        let side2lines = questionLines.slice(lineIdx + 1);
+        // Remove common indentation (blank prefix) for both sides
+        side1lines = removeCommonIndent(side1lines);
+        side2lines = removeCommonIndent(side2lines);
+        const side1: string = side1lines.join("\n");
+        const side2: string = side2lines.join("\n");
 
         const result: CardFrontBack[] = [new CardFrontBack(side1, side2)];
         return result;
@@ -79,8 +98,13 @@ class QuestionType_MultiLineReversed implements IQuestionTypeHandler {
             questionLines,
             settings.multilineReversedCardSeparator,
         );
-        const side1: string = questionLines.slice(0, lineIdx).join("\n");
-        const side2: string = questionLines.slice(lineIdx + 1).join("\n");
+        let side1lines = questionLines.slice(0, lineIdx);
+        let side2lines = questionLines.slice(lineIdx + 1);
+        // Remove common indentation (blank prefix) for both sides
+        side1lines = removeCommonIndent(side1lines);
+        side2lines = removeCommonIndent(side2lines);
+        const side1: string = side1lines.join("\n");
+        const side2: string = side2lines.join("\n");
 
         const result: CardFrontBack[] = [
             new CardFrontBack(side1, side2),
